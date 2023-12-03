@@ -1,7 +1,6 @@
 const { readAndSplit } = require("../utils/inputs");
 
 const inputLines = readAndSplit(1);
-console.log(inputLines.at(-1));
 const getFirstDigit = (string) => {
   const firstInt = string.match(/\d/)[0];
   return firstInt;
@@ -34,12 +33,12 @@ const getLastNumber = (string) => {
   const numberAsStringOrDigitRegex = new RegExp(
     `${Object.keys(numbersAsString).join("|")}|[1-9]`
   );
-  let lastMatch = "";
+  let lastMatch, index;
   let currentString = string;
   do {
     const currentMatch = currentString.match(numberAsStringOrDigitRegex);
-    if (currentMatch) lastMatch = currentMatch[0];
-    currentString = currentString.slice(1);
+    if (currentMatch) [lastMatch, index] = currentMatch;
+    currentString = currentString.slice(index);
   } while (currentString.length);
   return numbersAsString[lastMatch] ?? lastMatch;
 };
