@@ -1,6 +1,18 @@
 const { readAndSplit } = require("../utils/inputs");
 
 const input = readAndSplit(3);
+const getGearLocations = () => {
+  const locations = [];
+  input.forEach((line, y) => {
+    [...line].forEach((symbol, x) => {
+      if (input[y][x] === "*") {
+        locations.push(`${y},${x}`);
+      }
+    });
+  });
+  return locations;
+};
+const gearLocations = getGearLocations();
 const getMatches = (string) => string.matchAll(/\d+/g);
 const getAdjacent = (x, y) => {
   const neighbours = [];
@@ -33,7 +45,16 @@ const hasSymbolAdjacent = (x, y) => {
   }
   return false;
 };
-
+const hasGearAdjacent = (x, y) => {
+  const neighbours = getAdjacent(x, y);
+  for (let i = 0; i < neighbours.length; i++) {
+    const [xToCheck, yToCheck] = neighbours[i];
+    if (gearLocations.includes(`${yToCheck},${xToCheck}`)) {
+      return `${xToCheck},${yToCheck}`;
+    }
+  }
+  return false;
+};
 const matchNumberWithIndex = (string) => {
   const matchMetaData = [];
   const matches = string.matchAll(/\d+/g);
@@ -46,17 +67,25 @@ const matchNumberWithIndex = (string) => {
   return matchMetaData;
 };
 
+let gearCombinations = {};
 let total = 0;
 input.forEach((line, y) => {
   const numbers = matchNumberWithIndex(line);
   numbers.forEach(({ number, index: x }) => {
     for (let i = 0; i < number.length; i++) {
-      console.count(number);
-      if (hasSymbolAdjacent(x + i, y)) {
-        total += +number;
+      const gearLocation = hasGearAdjacent(x + i, y);
+      if (gearLocation) {
+        gearCombinations[gearLocation] ??= [];
+        gearCombinations[gearLocation].push(number);
         break;
       }
     }
   });
 });
+for (const key in gearCombinations) {
+  const parts = gearCombinations[key];
+  if (parts.length === 2) {
+    total += parts[0] * parts[1];
+  }
+}
 console.log(total);
