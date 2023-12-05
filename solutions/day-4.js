@@ -1,8 +1,11 @@
-console.time();
+console.time("iterative");
 const { readAndSplit } = require("../utils/inputs");
-const games = readAndSplit(4)
-  .map((game) => game.replace(/Card \d: /, ""))
-  .map((game) => game.split(" | "));
+const games = readAndSplit(4).map((game) => {
+  newGame = game.split(" | ");
+  newGame[0].replace(/Card \d: /, "");
+  return newGame;
+});
+
 let total = 0;
 const scratchCards = games.map((_, index) => index);
 const cache = {};
@@ -27,4 +30,4 @@ while (scratchCards.length) {
   }
 }
 console.log(total);
-console.timeEnd();
+console.timeEnd("iterative");
