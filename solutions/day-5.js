@@ -1,3 +1,4 @@
+const { log } = require("console");
 const { readFileSync } = require("fs");
 const input = readFileSync("./inputs/day-5.txt", "utf-8");
 function parseMappings(input) {
@@ -27,7 +28,41 @@ function mapsOnto(currentState, nextMap) {
   }
   return +currentState;
 }
-
+function rangeMapping(ranges, nextMap) {
+  const newRanges = [];
+  outer: while (ranges.length) {
+    const range = ranges.pop();
+    const low = range[0];
+    const high = range[1];
+    const highestMap = nextMap.reduce((acc, [_, source, range]) => {
+      return Math.max(+source + +range, acc);
+    }, 0);
+    const lowestMap = nextMap.reduce((acc, [_, source, range]) => {
+      return Math.min(+source, acc);
+    }, Infinity);
+    while (ranges.length) {
+      if (low < lowestMap && high > highestMap) {
+        newRanges.push([low, lowestMap]);
+        newRanges.push([highestMap, high]);
+        newRanges.push([lowestMap, highestMap]);
+      }
+      if (low < lowestMap && high !== highestMap) {
+        newRanges.push([low, lowestMap]);
+        newRanges.push([lowestMap, high]);
+      }
+      if (high > highestMap && low !== lowestMap) {
+        newRanges.push([low, highestMap]);
+        newRanges.push([highestMap, high]);
+      }
+      break;
+    }
+    const pair = [mapsOnto(low, nextMap), mapsOnto(high, nextMap)];
+    pair.sort();
+    newRanges.push(pair);
+    console.log(newRanges);
+    return newRanges;
+  }
+}
 function part1() {
   mappings = parseMappings(input);
   const mapOrder = [
@@ -40,15 +75,10 @@ function part1() {
     "humidity-to-location map",
   ];
   let lowest = Infinity;
-  const seeds = []; // Rand seeds in pairs of 2 accross multiple instances
-  for (let j = 91926764; j < 4138877354; j++) {
-    let i = 1;
-    if (j % 50000000 === 0) {
-      i += 1.4;
-      const percent = `${i}%`;
-      console.log(percent);
-    }
-    let currentState = j;
+  const seeds = mappings["seeds"];
+
+  for (const seed of seeds) {
+    let currentState = seed;
     for (const map of mapOrder) {
       currentState = mapsOnto(currentState, mappings[map]);
     }
@@ -56,35 +86,8 @@ function part1() {
   }
   console.log(lowest);
 }
-function parseMappings(input) {
-  const mapsData = input.split("\n\n");
-  const formattedData = {};
-  mapsData.forEach((map, index) => {
-    if (index === 0) {
-      const seeds = map.match(/\d+/g);
-      formattedData["seeds"] = seeds;
-    } else {
-      const splitMappings = map.split("\n");
-      const heading = splitMappings.shift().slice(0, -1);
-      formattedData[heading] ??= [];
-      splitMappings.forEach((line) => {
-        const maps = line.match(/\d+/g);
-        line && formattedData[heading].push(maps);
-      });
-    }
-  });
-  return formattedData;
-}
-function mapsOnto(currentState, nextMap) {
-  for (const [destination, source, range] of nextMap) {
-    const difference = +currentState - +source;
-    if (+difference < +range && difference >= 0)
-      return +destination + difference;
-  }
-  return +currentState;
-}
-function part1() {
-  mappings = parseMappings(input);
+function part2() {
+  const mappings = parseMappings(input);
   const mapOrder = [
     "seed-to-soil map",
     "soil-to-fertilizer map",
@@ -95,70 +98,27 @@ function part1() {
     "humidity-to-location map",
   ];
   let lowest = Infinity;
-  const seeds = [2781720183, 218217413, 1315129829, 102999617];
-  for (let i = 0; i < seeds.length; i += 2) {
-    const startSeed = +seeds[i];
-    const range = +seeds[i + 1];
-    for (let j = startSeed; j < startSeed + range; j++) {
-      if (j % 5000000 === 0) console.log(startSeed, range, j);
-      let currentState = j;
-      for (const map of mapOrder) {
-        currentState = mapsOnto(currentState, mappings[map]);
-      }
-      lowest = Math.min(currentState, lowest);
+  const seeds = mappings["seeds"];
+  let ranges = seeds.reduce((pairs, current, i) => {
+    if (i % 2 === 0) {
+      pairs.push([+current, +seeds[i + 1] + +current]);
+    }
+    return pairs;
+  }, []);
+
+  for (let range of ranges) {
+    console.log(range);
+    for (const map of mapOrder) {
+      range = rangeMapping([range], mappings[map]);
+      lowest = Math.min(...range.map((range) => range[0]));
     }
   }
   console.log(lowest);
 }
-console.time("part-2");
-
-console.timeEnd("part-2");
-
-function calculateRanges() {
-  const ranges = [
-    [91926764, 235794528],
-    [3279509610, 325625103],
-    [2781720183, 218217413],
-    [1315129829, 102999617],
-    [3995609239, 143268116],
-    [358337926, 185836835],
-    [1543999077, 241888600],
-    [1795811745, 806228439],
-    [2616560939, 56204204],
-    [869828854, 224520829],
-  ];
-  let lowest = Infinity;
-  let highest = -Infinity;
-  ranges.forEach(([start, range]) => {
-    lowest = Math.min(lowest, start);
-    highest = Math.max(highest, start + range - 1);
-  });
-  console.log(lowest, highest);
-}
-calculateRanges();
-
-console.time("part-2");
+console.time("part-1");
 part1();
-console.timeEnd("part-2");
+console.timeEnd("part-1");
 
-function calculateRanges() {
-  const ranges = [
-    [91926764, 235794528],
-    [3279509610, 325625103],
-    [2781720183, 218217413],
-    [1315129829, 102999617],
-    [3995609239, 143268116],
-    [358337926, 185836835],
-    [1543999077, 241888600],
-    [1795811745, 806228439],
-    [2616560939, 56204204],
-    [869828854, 224520829],
-  ];
-  let lowest = Infinity;
-  let highest = -Infinity;
-  ranges.forEach(([start, range]) => {
-    lowest = Math.min(lowest, start);
-    highest = Math.max(highest, start + range - 1);
-  });
-  console.log(lowest, highest);
-}
+console.time("part-2");
+part2();
+console.timeEnd("part-2");
